@@ -11,7 +11,7 @@ public class PriorityQueue <E extends Comparable<? super E>>{
     }
 
     public void enqueue(E other) {
-        if (con.size() == 0 || con.getLast().compareTo(other) < 0 ){
+        if (con.size() == 0 || con.getLast().compareTo(other) <= 0 ){
             con.add(other);
         } else {
             Iterator<E> iter = con.iterator();

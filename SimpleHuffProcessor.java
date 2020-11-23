@@ -11,8 +11,8 @@
  *  Grader name:
  *
  *  Student 2
- *  UTEID: dz5298
- *  email address: dzhuhaocheng2013@gmail.com
+ *  UTEID:
+ *  email address:
  *
  */
 
@@ -24,12 +24,13 @@ import java.util.ArrayList;
 public class SimpleHuffProcessor implements IHuffProcessor {
 
     private IHuffViewer myViewer;
+    final private static int INTERNAL_NODE = -1;
 
     /**
      * Preprocess data so that compression is possible ---
      * count characters/create tree/store state so that
      * a subsequent call to compress will work. The InputStream
-     * is <em>not</em> a BitInputStream, so wrap it int one as needed.
+     * is <em>not</em> a BitInputStream, so wrap it into one as needed.
      * @param in is the stream which could be subsequently compressed
      * @param headerFormat a constant from IHuffProcessor that determines what kind of
      * header to use, standard count format, standard tree format, or
@@ -43,14 +44,46 @@ public class SimpleHuffProcessor implements IHuffProcessor {
      * @throws IOException if an error occurs while reading from the input file.
      */
     public int preprocessCompress(InputStream in, int headerFormat) throws IOException {
+        int[] freq = new int[IHuffConstants.ALPH_SIZE];
+        BitInputStream bin = new BitInputStream(in);
+        int bit = bin.readBits(IHuffConstants.BITS_PER_WORD);
+        while (bit != -1) {
+            freq[bit]++;
+            bit = bin.readBits(IHuffConstants.BITS_PER_WORD);
+        }
+
+        PriorityQueue<TreeNode> q = new PriorityQueue<>();
+        for (int i = 0; i < freq.length; i ++) {
+            if (freq[i] != 0) {
+                TreeNode treeNode = new TreeNode(i, freq[i]);
+                q.enqueue(treeNode);
+            }
+        }
+        q.enqueue(new TreeNode(IHuffConstants.PSEUDO_EOF, 1));
+        createHuffmanTree(q);
+
+        bin.close();
+
         showString("Not working yet");
         myViewer.update("Still not working");
         throw new IOException("preprocess not implemented");
         //return 0;
     }
 
+    private void createHuffmanTree(PriorityQueue<TreeNode> q) {
+        while(q.size() > 1) {
+            TreeNode leftSubTree = q.dequeue();
+            TreeNode rightSubTree = q.dequeue();
+            TreeNode newTree = new TreeNode(leftSubTree, INTERNAL_NODE,
+                    rightSubTree);
+            q.enqueue(newTree);
+            System.out.println(q);
+        }
+    }
+
+
     /**
-	 * Compresses input to output, where the same InputStream has
+     * Compresses input to output, where the same InputStream has
      * previously been pre-processed via <code>preprocessCompress</code>
      * storing state used by this call.
      * <br> pre: <code>preprocessCompress</code> must be called before this method
@@ -78,8 +111,8 @@ public class SimpleHuffProcessor implements IHuffProcessor {
      * writing to the output file.
      */
     public int uncompress(InputStream in, OutputStream out) throws IOException {
-	        throw new IOException("uncompress not implemented");
-	        //return 0;
+        throw new IOException("uncompress not implemented");
+        //return 0;
     }
 
     public void setViewer(IHuffViewer viewer) {
