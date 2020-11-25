@@ -24,7 +24,7 @@ import java.util.ArrayList;
 public class SimpleHuffProcessor implements IHuffProcessor {
 
     private IHuffViewer myViewer;
-    final private static int INTERNAL_NODE = -1;
+    private HuffmanTree tree;
 
     /**
      * Preprocess data so that compression is possible ---
@@ -59,8 +59,11 @@ public class SimpleHuffProcessor implements IHuffProcessor {
                 q.enqueue(treeNode);
             }
         }
+        
         q.enqueue(new TreeNode(IHuffConstants.PSEUDO_EOF, 1));
-        createHuffmanTree(q);
+
+        // create huffman tree
+        tree = new HuffmanTree(q);
 
         bin.close();
 
@@ -68,17 +71,6 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         myViewer.update("Still not working");
         throw new IOException("preprocess not implemented");
         //return 0;
-    }
-
-    private void createHuffmanTree(PriorityQueue<TreeNode> q) {
-        while(q.size() > 1) {
-            TreeNode leftSubTree = q.dequeue();
-            TreeNode rightSubTree = q.dequeue();
-            TreeNode newTree = new TreeNode(leftSubTree, INTERNAL_NODE,
-                    rightSubTree);
-            q.enqueue(newTree);
-            System.out.println(q);
-        }
     }
 
 
