@@ -20,11 +20,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class SimpleHuffProcessor implements IHuffProcessor {
 
     private IHuffViewer myViewer;
     private HuffmanTree tree;
+    private int[] freq;
 
     /**
      * Preprocess data so that compression is possible ---
@@ -44,12 +46,14 @@ public class SimpleHuffProcessor implements IHuffProcessor {
      * @throws IOException if an error occurs while reading from the input file.
      */
     public int preprocessCompress(InputStream in, int headerFormat) throws IOException {
-        int[] freq = new int[IHuffConstants.ALPH_SIZE];
+        freq = new int[ALPH_SIZE];
         BitInputStream bin = new BitInputStream(in);
-        int bit = bin.readBits(IHuffConstants.BITS_PER_WORD);
+        int originalBits = 0;
+        int bit = bin.readBits(BITS_PER_WORD);
         while (bit != -1) {
+            originalBits += BITS_PER_WORD;
             freq[bit]++;
-            bit = bin.readBits(IHuffConstants.BITS_PER_WORD);
+            bit = bin.readBits(BITS_PER_WORD);
         }
 
         PriorityQueue<TreeNode> q = new PriorityQueue<>();
@@ -60,18 +64,31 @@ public class SimpleHuffProcessor implements IHuffProcessor {
             }
         }
         
-        q.enqueue(new TreeNode(IHuffConstants.PSEUDO_EOF, 1));
+        q.enqueue(new TreeNode(PSEUDO_EOF, 1));
 
         // create huffman tree
         tree = new HuffmanTree(q);
 
-        bin.close();
+        int compressedSize = 0;
+        compressedSize += 2*BITS_PER_INT;
+        if (headerFormat == IHuffConstants.STORE_COUNTS) {
+            compressedSize += BITS_PER_INT * ALPH_SIZE;
+        }
+        HashMap<Integer, String> huffMap = tree.getMap();
+        for (int val: huffMap.keySet()) {
+            if (val != PSEUDO_EOF) {
+                compressedSize += huffMap.get(val).length() * freq[val];
+            } else {
+                compressedSize += huffMap.get(val).length();
+            }
+        }
 
-        showString("Not working yet");
-        myViewer.update("Still not working");
-        throw new IOException("preprocess not implemented");
-        //return 0;
+
+        System.out.println(originalBits - compressedSize);
+        bin.close();
+        return originalBits - compressedSize;
     }
+
 
 
     /**
