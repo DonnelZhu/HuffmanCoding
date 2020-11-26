@@ -46,50 +46,67 @@ public class SimpleHuffProcessor implements IHuffProcessor {
      * @throws IOException if an error occurs while reading from the input file.
      */
     public int preprocessCompress(InputStream in, int headerFormat) throws IOException {
+        // store frequency in int array, has size of 256
         freq = new int[ALPH_SIZE];
         BitInputStream bin = new BitInputStream(in);
         int originalBits = 0;
+        // read in the first 8 bits 
         int bit = bin.readBits(BITS_PER_WORD);
+        
         while (bit != -1) {
+            // orignalBits incremented by 8 to count total # of bits in original file
             originalBits += BITS_PER_WORD;
+            // The int at index bit is the frequency of the occurence of bit
             freq[bit]++;
+            // goes to the next 8 bits
             bit = bin.readBits(BITS_PER_WORD);
         }
 
         PriorityQueue<TreeNode> q = new PriorityQueue<>();
+        // fills q with treeNodes made from freqb
+        createQueue(freq, q);
+
+        // creates huffman tree, takes in priority queue q as parameter
+        tree = new HuffmanTree(q);
+
+        // tracks the size of the newly compressed file  
+        int compressedSize = findCompressedSize(freq, tree, headerFormat);
+        
+        System.out.println(originalBits - compressedSize);
+        bin.close();
+        // return the amount of bits the compression has saved us
+        return originalBits - compressedSize;
+    }
+
+    private void createQueue(int[] freq, PriorityQueue<TreeNode> q){
         for (int i = 0; i < freq.length; i ++) {
+            // if the frequency of a character is > 0, it is added to q as a TreeNode
             if (freq[i] != 0) {
                 TreeNode treeNode = new TreeNode(i, freq[i]);
                 q.enqueue(treeNode);
             }
         }
-        
         q.enqueue(new TreeNode(PSEUDO_EOF, 1));
+    }
 
-        // create huffman tree
-        tree = new HuffmanTree(q);
-
+    private int findCompressedSize(int[] freq, HuffmanTree tree, int headerFormat){
         int compressedSize = 0;
         compressedSize += 2*BITS_PER_INT;
         if (headerFormat == IHuffConstants.STORE_COUNTS) {
             compressedSize += BITS_PER_INT * ALPH_SIZE;
         }
+        // gets map with value and its path in the huffman tree
         HashMap<Integer, String> huffMap = tree.getMap();
+        // finishes calculating total # of bits in compressed file
         for (int val: huffMap.keySet()) {
             if (val != PSEUDO_EOF) {
                 compressedSize += huffMap.get(val).length() * freq[val];
             } else {
                 compressedSize += huffMap.get(val).length();
             }
-        }
-
-
-        System.out.println(originalBits - compressedSize);
-        bin.close();
-        return originalBits - compressedSize;
+        } 
+        return compressedSize;
     }
-
-
 
     /**
      * Compresses input to output, where the same InputStream has
