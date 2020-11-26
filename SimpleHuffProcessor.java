@@ -104,7 +104,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
             compressedSize += BITS_PER_INT * ALPH_SIZE;
         } else if (headerFormat == STORE_TREE) {
             compressedSize += BITS_PER_INT;
-            for (TreeNode node: tree.getAll()) {
+            for (TreeNode node: tree.getAllInOrder()) {
                 // all nodes are one bit
                 compressedSize +=1;
                 //if a node is a leaf, then it requires 8 bits for the value
@@ -199,8 +199,18 @@ public class SimpleHuffProcessor implements IHuffProcessor {
     }
 
     private void treeHeader(BitOutputStream out){
-        String header = tree.makeHeader();
-        writeStringAsBits(out, header);
+        // find the size of the tree header
+        out.writeBits(BITS_PER_INT, tree.getNumInternalNodes() + tree.getNumLeafNodes() * (BITS_PER_WORD + 1));
+
+        // add the data for the tree
+        for (TreeNode node: tree.getAllPreOrder()) {
+            if (node.isLeaf()) {
+                out.writeBits(1, 1);
+                out.writeBits(BITS_PER_WORD + 1, node.getValue());
+            } else {
+                out.writeBits(1, 0);
+            }
+        }
     }
 
     /**
