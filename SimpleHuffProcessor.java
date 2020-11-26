@@ -200,6 +200,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
 
     private void treeHeader(BitOutputStream out){
         String header = tree.makeHeader();
+        writeStringAsBits(out, header);
     }
 
     /**
