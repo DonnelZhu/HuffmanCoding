@@ -147,23 +147,54 @@ public class SimpleHuffProcessor implements IHuffProcessor {
             return 0;
         }
 
+        int sizeOfFile = 0;
         BitInputStream bin = new BitInputStream(in);
         BitOutputStream bout = new BitOutputStream(out);
-        createHeader(bout);
-        return 0;
+        createHeader(bout, sizeOfFile);
+        // write out the actual compressed file
+        HashMap<Integer, String> huffMap = tree.getMap();
+        int bit = bin.readBits(BITS_PER_WORD);
+        while (bit != -1) {
+            writeStringAsBits(bout, huffMap.get(bit));
+            sizeOfFile+=BITS_PER_WORD;
+            // goes to the next 8 bits
+            bit = bin.readBits(BITS_PER_WORD);
+        }
+        // PSEUDO_EOF value at the end of the file
+        writeStringAsBits(bout, huffMap.get(PSEUDO_EOF));
+
+        // fill out remaining bits
+        bout.flush();
+
+        bin.close();
+        bout.close();
+        return sizeOfFile;
     }
 
-    private void createHeader(BitOutputStream out) {
+    private void writeStringAsBits(BitOutputStream out, String string) {
+        for (int i = 0; i < string.length(); i ++) {
+            if (string.charAt(i) == '0') {
+                out.writeBits(1, 0);
+            } else {
+                out.writeBits(1, 1);
+            }
+        }
+    }
+
+    private void createHeader(BitOutputStream out, int sizeOfFile) {
         out.writeBits(BITS_PER_INT, MAGIC_NUMBER); // magic number
         out.writeBits(BITS_PER_INT, headerType); // header type
         if (headerType == STORE_COUNTS) { // all counts of "characters"
             countHeader(out);
+        } else if (headerType == STORE_TREE){
+            treeHeader(out);
         }
+
     }
 
     private void countHeader(BitOutputStream out){
         for (int frequency: freq) {
-            out.writeBits(BITS_PER_WORD, frequency);
+            out.writeBits(BITS_PER_INT, frequency);
         }
     }
 
