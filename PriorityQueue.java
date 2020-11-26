@@ -26,21 +26,11 @@ public class PriorityQueue <E extends Comparable<? super E>>{
             }
         }
     }
+    public int size(){
+        return con.size();
+    }
     
     public E dequeue(){
         return con.removeFirst();
-    }
-
-    //TODO: REMOVE IF NECESSARY
-    public E peek(){
-        return con.getFirst();
-    }
-
-    public String toString(){
-        return con.toString();
-    }
-
-    public int size(){
-        return con.size();
     }
 }
