@@ -4,13 +4,19 @@ import java.util.List;
 
 public class HuffmanTree {
     private TreeNode root;
+    private String size;
     private HashMap<Integer, String> map;
     final private static String RIGHT = "1";
     final private static String LEFT = "0";
     final private static int INTERNAL_NODE = -1;
 
     public HuffmanTree(PriorityQueue<TreeNode> q){
+        // creates binary string of the int given by q.size()
+        size = Integer.toBinaryString(q.size());
+        // iterates through queue
         while(q.size() > 1) {
+            // takes two TreeNodes from the front and combines into newTree, which is
+            // then enqueued to the q
             TreeNode leftSubTree = q.dequeue();
             TreeNode rightSubTree = q.dequeue();
             TreeNode newTree = new TreeNode(leftSubTree, INTERNAL_NODE,rightSubTree);
@@ -56,4 +62,22 @@ public class HuffmanTree {
     }
 
 
+    public String makeHeader(){
+        // TODO: CHANGE
+        String header = "";
+        makeHeaderHelper(root, header);
+        
+        return header;
+    }
+    // helper method for makeHeader(), iterates through tree in pre-order and creates rest of
+    // header string
+    private void makeHeaderHelper(TreeNode node, String header){
+        if (node.isLeaf()){
+            header += "1" + node.getValue();
+        } else {
+            header += "0";
+            makeHeaderHelper(node.getLeft(), header);
+            makeHeaderHelper(node.getRight(), header);
+        }
+    }
 }

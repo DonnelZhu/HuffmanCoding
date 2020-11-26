@@ -29,7 +29,8 @@ public class SimpleHuffProcessor implements IHuffProcessor {
     private int[] freq;
     private int headerType;
     private boolean hasPreCompression;
-
+    private int diffInBits;
+    private HashMap<Integer, String> huffMap;
     /**
      * Preprocess data so that compression is possible ---
      * count characters/create tree/store state so that
@@ -72,14 +73,15 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         tree = new HuffmanTree(q);
 
         // tracks the size of the newly compressed file  
-        int compressedSize = findCompressedSize(freq, tree, headerFormat);
+        int compressedBits = findCompressedSize(freq, tree, headerFormat);
         headerType = headerFormat;
         
-        System.out.println(originalBits - compressedSize);
+        System.out.println(originalBits - compressedBits);
         bin.close();
         hasPreCompression = true;
         // return the amount of bits the compression has saved us
-        return originalBits - compressedSize;
+        diffInBits = originalBits - compressedBits;
+        return diffInBits;
     }
 
     private void createQueue(int[] freq, PriorityQueue<TreeNode> q){
@@ -96,7 +98,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
     private int findCompressedSize(int[] freq, HuffmanTree tree, int headerFormat){
         int compressedSize = 0;
         // gets map with value and its path in the huffman tree
-        HashMap<Integer, String> huffMap = tree.getMap();
+        huffMap = tree.getMap();
         compressedSize += 2*BITS_PER_INT;
         if (headerFormat == IHuffConstants.STORE_COUNTS) {
             compressedSize += BITS_PER_INT * ALPH_SIZE;
@@ -140,6 +142,11 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         if (!hasPreCompression) {
             throw new IllegalStateException("has not precompressed");
         }
+
+        if (!force && diffInBits <= 0){
+            return 0;
+        }
+
         BitInputStream bin = new BitInputStream(in);
         BitOutputStream bout = new BitOutputStream(out);
         createHeader(bout);
@@ -161,7 +168,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
     }
 
     private void treeHeader(BitOutputStream out){
-
+        String header = tree.makeHeader();
     }
 
     /**
