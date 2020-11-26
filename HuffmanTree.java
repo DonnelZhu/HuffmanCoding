@@ -28,7 +28,6 @@ public class HuffmanTree {
 
     private void fillMap(TreeNode curr, String currChunk){
         if (curr.isLeaf()){
-            System.out.println("added " + curr);
             map.put(curr.getValue(), currChunk);
         } else {
             fillMap(curr.getLeft(), currChunk + LEFT);
