@@ -58,7 +58,6 @@ public class HuffmanTree {
 
     }
 
-
     public String makeHeader(){
         String header = "";
         makeHeaderHelper(root, header);
