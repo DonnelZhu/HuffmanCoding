@@ -69,7 +69,6 @@ public class HuffmanTree {
         }
 
     }
-
     public List<TreeNode> getAllPreOrder() {
         List<TreeNode> result = new ArrayList<>();
         getAllPreOrderHelper(root, result);

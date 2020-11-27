@@ -105,7 +105,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
             compressedSize += BITS_PER_INT * ALPH_SIZE;
         } else if (headerFormat == STORE_TREE) {
             compressedSize += BITS_PER_INT;
-            for (TreeNode node: tree.getAllInOrder()) {
+            for (TreeNode node: tree.getAll()) {
                 // all nodes are one bit
                 compressedSize +=1;
                 //if a node is a leaf, then it requires 8 bits for the value
