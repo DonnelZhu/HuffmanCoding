@@ -12,6 +12,13 @@ public class HuffmanTree {
     final private static String LEFT = "0";
     final private static int INTERNAL_NODE = -1;
 
+    public HuffmanTree() {
+        root = null;
+        map = new HashMap<>();
+        numLeafNodes = 0;
+        numInternalNodes = 0;
+    }
+
     public HuffmanTree(PriorityQueue<TreeNode> q){
         // iterates through queue
         numLeafNodes = q.size();
@@ -91,22 +98,36 @@ public class HuffmanTree {
         return numInternalNodes;
     }
 
-
-    /*public String makeHeader(){
-        String header = "";
-        makeHeaderHelper(root, header);
-        header = Integer.toBinaryString(header.length()) + header;
-        return header;
-    }
-    // helper method for makeHeader(), iterates through tree in pre-order and creates rest of
-    // header string
-    private void makeHeaderHelper(TreeNode node, String header){
-        if (node.isLeaf()){
-            header = header.concat("1" + Integer.toBinaryString(node.getValue()));
+    public void add(int val) {
+        if (root == null) {
+            root = new TreeNode(val, 0);
         } else {
-            header += "0";
-            makeHeaderHelper(node.getLeft(), header);
-            makeHeaderHelper(node.getRight(), header);
+            addHelper(root, val);
         }
-    }*/
+    }
+
+    private boolean addHelper(TreeNode n, int val) {
+        if (n.getValue() == INTERNAL_NODE) { // has not reached leaf node
+            if (n.isLeaf()) { // internal node is leaf, add to left side
+                n.setLeft(new TreeNode(val, 0));
+                return true; // has added, ends recursion
+            } else { // internal node has at least one child, go left, then go right
+                // left leaf must != null if n != isLeaf()
+                boolean added = addHelper(n.getLeft(), val);
+                // attempts to add to right if does not add to left
+                if (!added) {
+                    TreeNode right = n.getRight();
+                    if (right == null) {
+                        n.setRight(new TreeNode(val, 0));
+                        added = true;
+                    } else {
+                        added = addHelper(right, val);
+                    }
+                }
+                return added;
+            }
+        }
+        return false; // default base case: does not add if not internal node
+    }
+
 }

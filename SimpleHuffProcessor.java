@@ -16,6 +16,8 @@
  *
  */
 
+import com.sun.source.tree.Tree;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -75,8 +77,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         // tracks the size of the newly compressed file  
         int compressedBits = findCompressedSize(freq, tree, headerFormat);
         headerType = headerFormat;
-        
-        System.out.println(originalBits - compressedBits);
+
         bin.close();
         hasPreCompression = true;
         // return the amount of bits the compression has saved us
@@ -200,7 +201,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
 
     private void treeHeader(BitOutputStream out){
         // find the size of the tree header
-        out.writeBits(BITS_PER_INT, tree.getNumInternalNodes() + tree.getNumLeafNodes() * (BITS_PER_WORD + 1));
+        out.writeBits(BITS_PER_INT, tree.getNumInternalNodes() + tree.getNumLeafNodes() + tree.getNumLeafNodes() * (BITS_PER_WORD + 1));
 
         // add the data for the tree
         for (TreeNode node: tree.getAllPreOrder()) {
@@ -223,8 +224,57 @@ public class SimpleHuffProcessor implements IHuffProcessor {
      * writing to the output file.
      */
     public int uncompress(InputStream in, OutputStream out) throws IOException {
-        throw new IOException("uncompress not implemented");
-        //return 0;
+        BitInputStream bin = new BitInputStream(in);
+        BitOutputStream bout = new BitOutputStream(out);
+        if (bin.readBits(BITS_PER_INT) != MAGIC_NUMBER) { // check if file has been compressed
+            myViewer.showError("File did not start with huff magic number");
+            return -1;
+        }
+        // creates huffman tree for decompression depending on how file was compressed
+        int headerType = bin.readBits(BITS_PER_INT);
+        HuffmanTree uncompressingTree = headerType == STORE_COUNTS ? createTreeFromCount(bin) : createTreeFromTree(bin);
+
+        return 0;
+    }
+
+    private HuffmanTree createTreeFromCount(BitInputStream in) throws IOException {
+        int [] freq = new int[ALPH_SIZE];
+        int bit = in.readBits(BITS_PER_INT); // frequency of bit at index
+        int index = 0;
+        while (bit != -1 && index < ALPH_SIZE) {
+            if (bit > 0) {
+                freq[index] += bit;
+            }
+            bit = in.readBits(BITS_PER_INT);
+            index ++;
+        }
+
+        // create priority queue from freq array from header
+        PriorityQueue<TreeNode> q = new PriorityQueue<>();
+        createQueue(freq, q);
+
+        // return new instance of huffman tree created from the queue
+        return new HuffmanTree(q);
+    }
+
+    private HuffmanTree createTreeFromTree(BitInputStream in) throws IOException {
+        HuffmanTree result = new HuffmanTree();
+        final int INTERNAL_NODE = -1;
+        int size = in.readBits(BITS_PER_INT); // reads in a size of the tree
+        int bitsProcessed = 0;
+        while(bitsProcessed < size) {
+            int bit = in.readBits(1);
+            bitsProcessed += 1;
+            if (bit == 0) { // means its an internal node
+                result.add(INTERNAL_NODE);
+            } else if (bit == 1) {// means its a leaf node
+                int val = in.readBits(BITS_PER_WORD + 1);
+                bitsProcessed += (BITS_PER_WORD + 1);
+                result.add(val);
+            }
+        }
+
+        return result;
     }
 
     public void setViewer(IHuffViewer viewer) {
