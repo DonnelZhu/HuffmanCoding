@@ -104,6 +104,7 @@ public class HuffmanTree {
         return root;
     }
 
+    // adds to 
     public void add(int val) {
         if (root == null) {
             root = new TreeNode(val, 0);
