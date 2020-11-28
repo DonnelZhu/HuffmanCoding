@@ -121,9 +121,9 @@ public class SimpleHuffProcessor implements IHuffProcessor {
             for (TreeNode node: tree.getAllInOrder()) {
                 // all nodes are one bit
                 compressedSize +=1;
-                //if a node is a leaf, then it requires 8 bits for the value
+                //if a node is a leaf, then it requires 9 bits for the value
                 if (node.isLeaf()) {
-                    compressedSize += BITS_PER_WORD;
+                    compressedSize += BITS_PER_WORD + 1;
                 }
             }
         }
@@ -199,10 +199,6 @@ public class SimpleHuffProcessor implements IHuffProcessor {
     // Creates header depending on headerType
     // pre: sizeOfFile >= 0
     // post: writes out header
-    private void createHeader(BitOutputStream out, int sizeOfFile) {
-        if (sizeOfFile < 0){
-            throw new IllegalArgumentException("sizeOfFile cannot be negative");
-        }
     private void createHeader(BitOutputStream out) {
         out.writeBits(BITS_PER_INT, MAGIC_NUMBER); // magic number
         out.writeBits(BITS_PER_INT, headerType); // header type
