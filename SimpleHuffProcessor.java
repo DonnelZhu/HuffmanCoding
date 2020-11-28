@@ -122,8 +122,10 @@ public class SimpleHuffProcessor implements IHuffProcessor {
                 // all nodes are one bit
                 compressedSize += 1;
                 // if a node is a leaf, then it requires 8 bits for the value
+
+                //if a node is a leaf, then it requires 9 bits for the value
                 if (node.isLeaf()) {
-                    compressedSize += BITS_PER_WORD;
+                    compressedSize += BITS_PER_WORD + 1;
                 }
             }
         }
@@ -199,6 +201,8 @@ public class SimpleHuffProcessor implements IHuffProcessor {
     }
 
     // Creates header depending on headerType
+    // pre: sizeOfFile >= 0
+    // post: writes out header
     private void createHeader(BitOutputStream out) {
         // magic number
         out.writeBits(BITS_PER_INT, MAGIC_NUMBER);
@@ -293,16 +297,14 @@ public class SimpleHuffProcessor implements IHuffProcessor {
 
     // creates HuffmanTree from SCF
     private HuffmanTree createTreeFromCount(BitInputStream in) throws IOException {
-        final int PSEUDO_EOF_VALUE = -1; 
-        int[] freq = new int[ALPH_SIZE];
-        int bit = in.readBits(BITS_PER_INT); 
+        int [] freq = new int[ALPH_SIZE];
         int index = 0;
-        while (bit != PSEUDO_EOF_VALUE & index < ALPH_SIZE - 1) {
+        while (index < ALPH_SIZE) {
+            int bit = in.readBits(BITS_PER_INT);
             if (bit > 0) {
                 freq[index] += bit;
             }
-            bit = in.readBits(BITS_PER_INT);
-            index++;
+            index ++;
         }
 
         // create priority queue from freq array from header
