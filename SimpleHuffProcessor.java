@@ -263,13 +263,12 @@ public class SimpleHuffProcessor implements IHuffProcessor {
 
     private HuffmanTree createTreeFromCount(BitInputStream in) throws IOException {
         int [] freq = new int[ALPH_SIZE];
-        int bit = in.readBits(BITS_PER_INT); // frequency of bit at index
         int index = 0;
-        while (bit != -1 && index < ALPH_SIZE - 1) {
+        while (index < ALPH_SIZE) {
+            int bit = in.readBits(BITS_PER_INT);
             if (bit > 0) {
                 freq[index] += bit;
             }
-            bit = in.readBits(BITS_PER_INT);
             index ++;
         }
 
