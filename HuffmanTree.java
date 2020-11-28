@@ -57,7 +57,7 @@ public class HuffmanTree {
     }
 
     // helper method for getAll
-    // adds all values of BST into result in ascending order
+    // adds all values of Huffman Tree into result in ascending order
     private void getAllInOrderHelper(TreeNode current, List<TreeNode> result) {
         if (current != null) {
             // adds left subtree
@@ -76,7 +76,7 @@ public class HuffmanTree {
     }
 
     // helper method for getAll
-    // adds all values of BST into result in ascending order
+    // adds all values of Huffman Tree into result in pre order
     private void getAllPreOrderHelper(TreeNode current, List<TreeNode> result) {
         if (current != null) {
             // adds current node
@@ -100,6 +100,10 @@ public class HuffmanTree {
     }
 
     // adds val to priority queue 
+    public TreeNode getRoot() {
+        return root;
+    }
+
     public void add(int val) {
         if (root == null) {
             root = new TreeNode(val, 0);
@@ -114,7 +118,6 @@ public class HuffmanTree {
                 n.setLeft(new TreeNode(val, 0));
                 return true; // has added, ends recursion
             } else { // internal node has at least one child, go left, then go right
-                // left leaf must != null if n != isLeaf()
                 boolean added = addHelper(n.getLeft(), val);
                 // attempts to add to right if does not add to left
                 if (!added) {

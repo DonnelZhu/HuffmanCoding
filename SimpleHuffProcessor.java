@@ -33,6 +33,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
     private boolean hasPreCompression;
     private int diffInBits;
     private HashMap<Integer, String> huffMap;
+    private int compressedSize;
     /**
      * Preprocess data so that compression is possible ---
      * count characters/create tree/store state so that
@@ -75,13 +76,13 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         tree = new HuffmanTree(q);
 
         // tracks the size of the newly compressed file  
-        int compressedBits = findCompressedSize(freq, tree, headerFormat);
+        compressedSize = findCompressedSize(freq, tree, headerFormat);
         headerType = headerFormat;
 
         bin.close();
         hasPreCompression = true;
         // return the amount of bits the compression has saved us
-        diffInBits = originalBits - compressedBits;
+        diffInBits = originalBits - compressedSize;
         return diffInBits;
     }
 
@@ -113,7 +114,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         // gets map with value and its path in the huffman tree
         huffMap = tree.getMap();
         compressedSize += 2*BITS_PER_INT;
-        if (headerFormat == IHuffConstants.STORE_COUNTS) {
+        if (headerFormat == STORE_COUNTS) {
             compressedSize += BITS_PER_INT * ALPH_SIZE;
         } else if (headerFormat == STORE_TREE) {
             compressedSize += BITS_PER_INT;
@@ -160,16 +161,14 @@ public class SimpleHuffProcessor implements IHuffProcessor {
             return 0;
         }
 
-        int sizeOfFile = 0;
         BitInputStream bin = new BitInputStream(in);
         BitOutputStream bout = new BitOutputStream(out);
-        createHeader(bout, sizeOfFile);
+        createHeader(bout);
         // write out the actual compressed file
         HashMap<Integer, String> huffMap = tree.getMap();
         int bit = bin.readBits(BITS_PER_WORD);
         while (bit != -1) {
             writeStringAsBits(bout, huffMap.get(bit));
-            sizeOfFile+=BITS_PER_WORD;
             // goes to the next 8 bits
             bit = bin.readBits(BITS_PER_WORD);
         }
@@ -181,7 +180,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
 
         bin.close();
         bout.close();
-        return sizeOfFile;
+        return compressedSize;
     }
 
     // Writes out string as bits
@@ -204,6 +203,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         if (sizeOfFile < 0){
             throw new IllegalArgumentException("sizeOfFile cannot be negative");
         }
+    private void createHeader(BitOutputStream out) {
         out.writeBits(BITS_PER_INT, MAGIC_NUMBER); // magic number
         out.writeBits(BITS_PER_INT, headerType); // header type
         if (headerType == STORE_COUNTS) { // all counts of "characters"
@@ -249,6 +249,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
     public int uncompress(InputStream in, OutputStream out) throws IOException {
         BitInputStream bin = new BitInputStream(in);
         BitOutputStream bout = new BitOutputStream(out);
+        int decompressedSize = 0;
         if (bin.readBits(BITS_PER_INT) != MAGIC_NUMBER) { // check if file has been compressed
             myViewer.showError("File did not start with huff magic number");
             return -1;
@@ -257,14 +258,38 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         int headerType = bin.readBits(BITS_PER_INT);
         HuffmanTree uncompressingTree = headerType == STORE_COUNTS ? createTreeFromCount(bin) : createTreeFromTree(bin);
 
-        return 0;
+        int bit = bin.readBits(1);
+        TreeNode currentNode = uncompressingTree.getRoot();
+
+        while(currentNode != null) {
+            // reached leaf node with value
+            if (currentNode.isLeaf()) {
+                int val = currentNode.getValue();
+                if (val != PSEUDO_EOF) {
+                    bout.write(val);
+                    decompressedSize += BITS_PER_WORD;
+                    currentNode = uncompressingTree.getRoot();
+                } else {
+                    currentNode = null;
+                }
+            } else {
+                if (bit == 0) {
+                    currentNode = currentNode.getLeft();
+                } else {
+                    currentNode = currentNode.getRight();
+                }
+                bit = bin.readBits(1);
+            }
+        }
+
+        return decompressedSize;
     }
 
     private HuffmanTree createTreeFromCount(BitInputStream in) throws IOException {
         int [] freq = new int[ALPH_SIZE];
         int bit = in.readBits(BITS_PER_INT); // frequency of bit at index
         int index = 0;
-        while (bit != -1 && index < ALPH_SIZE) {
+        while (bit != -1 && index < ALPH_SIZE - 1) {
             if (bit > 0) {
                 freq[index] += bit;
             }
