@@ -89,14 +89,17 @@ public class HuffmanTree {
 
     }
 
+    // Returns number of leaf nodes
     public int getNumLeafNodes(){
         return numLeafNodes;
     }
 
+    // Returns number of internal nodes
     public int getNumInternalNodes() {
         return numInternalNodes;
     }
 
+    // adds val to priority queue 
     public void add(int val) {
         if (root == null) {
             root = new TreeNode(val, 0);
@@ -130,3 +133,4 @@ public class HuffmanTree {
     }
 
 }
+

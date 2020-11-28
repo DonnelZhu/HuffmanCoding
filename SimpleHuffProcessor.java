@@ -85,7 +85,12 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         return diffInBits;
     }
 
+    // fills up PriorityQueue with treenodes made from uncompressed file
+    // pre: q != null
     private void createQueue(int[] freq, PriorityQueue<TreeNode> q){
+        if (q == null){
+            throw new IllegalArgumentException("PriorityQueue q cannot be null");
+        }
         for (int i = 0; i < freq.length; i ++) {
             // if the frequency of a character is > 0, it is added to q as a TreeNode
             if (freq[i] != 0) {
@@ -93,10 +98,17 @@ public class SimpleHuffProcessor implements IHuffProcessor {
                 q.enqueue(treeNode);
             }
         }
+        // enqeue TreeNode with PSEUDO_EOF value last
         q.enqueue(new TreeNode(PSEUDO_EOF, 1));
     }
 
+    // calculates the size of the compressed file
+    // pre: tree != null
+    // post: returns int of the total size of compressed file
     private int findCompressedSize(int[] freq, HuffmanTree tree, int headerFormat){
+        if (tree == null){
+            throw new IllegalArgumentException("HuffmanTree tree cannot be null");
+        }
         int compressedSize = 0;
         // gets map with value and its path in the huffman tree
         huffMap = tree.getMap();
@@ -105,7 +117,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
             compressedSize += BITS_PER_INT * ALPH_SIZE;
         } else if (headerFormat == STORE_TREE) {
             compressedSize += BITS_PER_INT;
-            for (TreeNode node: tree.getAll()) {
+            for (TreeNode node: tree.getAllInOrder()) {
                 // all nodes are one bit
                 compressedSize +=1;
                 //if a node is a leaf, then it requires 8 bits for the value
@@ -141,7 +153,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
      */
     public int compress(InputStream in, OutputStream out, boolean force) throws IOException {
         if (!hasPreCompression) {
-            throw new IllegalStateException("has not precompressed");
+            throw new IllegalStateException("File has not been precompressed");
         }
 
         if (!force && diffInBits <= 0){
@@ -172,6 +184,9 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         return sizeOfFile;
     }
 
+    // Writes out string as bits
+    // pre: 
+    // post: string written out in terms of bits
     private void writeStringAsBits(BitOutputStream out, String string) {
         for (int i = 0; i < string.length(); i ++) {
             if (string.charAt(i) == '0') {
@@ -182,7 +197,13 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         }
     }
 
+    // Creates header depending on headerType
+    // pre: sizeOfFile >= 0
+    // post: writes out header
     private void createHeader(BitOutputStream out, int sizeOfFile) {
+        if (sizeOfFile < 0){
+            throw new IllegalArgumentException("sizeOfFile cannot be negative");
+        }
         out.writeBits(BITS_PER_INT, MAGIC_NUMBER); // magic number
         out.writeBits(BITS_PER_INT, headerType); // header type
         if (headerType == STORE_COUNTS) { // all counts of "characters"
@@ -193,12 +214,14 @@ public class SimpleHuffProcessor implements IHuffProcessor {
 
     }
 
+    // Writes out header for Standard Count Format
     private void countHeader(BitOutputStream out){
         for (int frequency: freq) {
             out.writeBits(BITS_PER_INT, frequency);
         }
     }
 
+    // Writes out header for Standard Tree Format
     private void treeHeader(BitOutputStream out){
         // find the size of the tree header
         out.writeBits(BITS_PER_INT, tree.getNumInternalNodes() + tree.getNumLeafNodes() + tree.getNumLeafNodes() * (BITS_PER_WORD + 1));
