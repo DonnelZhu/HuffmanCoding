@@ -99,11 +99,6 @@ public class HuffmanTree {
         return numInternalNodes;
     }
 
-    // adds val to priority queue 
-    public TreeNode getRoot() {
-        return root;
-    }
-
     public void add(int val) {
         if (root == null) {
             root = new TreeNode(val, 0);
@@ -133,6 +128,18 @@ public class HuffmanTree {
             }
         }
         return false; // default base case: does not add if not internal node
+    }
+
+    public TreeNode getValue(TreeNode n, int bit) {
+        if (n == null) {
+            return root;
+        } else {
+            if (LEFT.equals(Integer.toString(bit))) {
+                return n.getLeft();
+            } else {
+                return n.getRight();
+            }
+        }
     }
 
 }
