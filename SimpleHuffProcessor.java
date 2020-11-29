@@ -267,7 +267,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         HuffmanTree uncompressingTree = headerType == STORE_COUNTS ? createTreeFromCount(bin) : createTreeFromTree(bin);
 
         int bit = bin.readBits(1);
-        TreeNode currentNode = uncompressingTree.getRoot();
+        TreeNode currentNode = tree.getValue(null, bit);
 
         while (currentNode != null) {
             // reached leaf node with value
@@ -276,7 +276,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
                 if (val != PSEUDO_EOF) {
                     bout.write(val);
                     decompressedSize += BITS_PER_WORD;
-                    currentNode = uncompressingTree.getRoot();
+                    currentNode = tree.getValue(null, bit);
                 } else {
                     currentNode = null;
                 }
