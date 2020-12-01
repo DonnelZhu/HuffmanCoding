@@ -99,6 +99,12 @@ public class HuffmanTree {
         return numInternalNodes;
     }
 
+    // adds val to priority queue 
+    public TreeNode getRoot() {
+        return root;
+    }
+
+    // adds to 
     public void add(int val) {
         if (root == null) {
             root = new TreeNode(val, 0);
