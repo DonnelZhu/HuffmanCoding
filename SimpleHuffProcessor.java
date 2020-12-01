@@ -121,8 +121,6 @@ public class SimpleHuffProcessor implements IHuffProcessor {
             for (TreeNode node : tree.getAllInOrder()) {
                 // all nodes are one bit
                 compressedSize += 1;
-                // if a node is a leaf, then it requires 8 bits for the value
-
                 //if a node is a leaf, then it requires 9 bits for the value
                 if (node.isLeaf()) {
                     compressedSize += BITS_PER_WORD + 1;
