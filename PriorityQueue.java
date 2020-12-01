@@ -33,4 +33,8 @@ public class PriorityQueue <E extends Comparable<? super E>>{
     public E dequeue(){
         return con.removeFirst();
     }
+
+    public E peek(){
+        return con.peek();
+    }
 }
