@@ -17,6 +17,8 @@
  */
 
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -55,7 +57,7 @@ public class SimpleHuffProcessor implements IHuffProcessor {
     public int preprocessCompress(InputStream in, int headerFormat) throws IOException {
         // store frequency in int array, has size of 256
         freq = new int[ALPH_SIZE];
-        BitInputStream bin = new BitInputStream(in);
+        BitInputStream bin = new BitInputStream(new BufferedInputStream(in));
         int originalBits = 0;
         // read in the first 8 bits
         int bit = bin.readBits(BITS_PER_WORD);
@@ -139,8 +141,6 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         return compressedSize;
     }
 
-    static double timeForWrite = 0;
-    static double timeForRead = 0;
     static Stopwatch sp = new Stopwatch();
 
     /**
@@ -160,8 +160,6 @@ public class SimpleHuffProcessor implements IHuffProcessor {
      *                     writing to the output file.
      */
     public int compress(InputStream in, OutputStream out, boolean force) throws IOException {
-        timeForWrite = 0;
-        timeForRead = 0;
         if (!hasPreCompression) {
             throw new IllegalStateException("File has not been precompressed");
         }
@@ -171,22 +169,16 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         }
 
 
-        BitInputStream bin = new BitInputStream(in);
-        BitOutputStream bout = new BitOutputStream(out);
+        BitInputStream bin = new BitInputStream(new BufferedInputStream(in));
+        BitOutputStream bout = new BitOutputStream(new BufferedOutputStream(out));
         createHeader(bout);
         // write out the actual compressed file
         HashMap<Integer, String> huffMap = tree.getMap();
-        sp.start();
         int bit = bin.readBits(BITS_PER_WORD);
-        sp.stop();
-        timeForRead+=sp.time();
         while (bit != -1) {
             writeStringAsBits(bout, huffMap.get(bit));
             // goes to the next 8 bits
-            sp.start();
             bit = bin.readBits(BITS_PER_WORD);
-            sp.stop();
-            timeForRead+=sp.time();
         }
         // PSEUDO_EOF value at the end of the file
         writeStringAsBits(bout, huffMap.get(PSEUDO_EOF));
@@ -196,7 +188,6 @@ public class SimpleHuffProcessor implements IHuffProcessor {
 
         bin.close();
         bout.close();
-        System.out.println(timeForWrite + timeForRead + " " + timeForWrite);
         return compressedSize;
     }
 
@@ -205,14 +196,11 @@ public class SimpleHuffProcessor implements IHuffProcessor {
     // post: string written out in terms of bits
     private void writeStringAsBits(BitOutputStream out, String string) {
         for (int i = 0; i < string.length(); i ++) {
-            sp.start();
             if (string.charAt(i) == '0') {
                 out.writeBits(1, 0);
             } else {
                 out.writeBits(1, 1);
             }
-            sp.stop();
-            timeForWrite+=sp.time();
         }
     }
 
@@ -220,13 +208,10 @@ public class SimpleHuffProcessor implements IHuffProcessor {
     // pre: sizeOfFile >= 0
     // post: writes out header
     private void createHeader(BitOutputStream out) {
-        sp.start();
         // magic number
         out.writeBits(BITS_PER_INT, MAGIC_NUMBER);
         // header type
         out.writeBits(BITS_PER_INT, headerType);
-        sp.stop();
-        timeForWrite+=sp.time();
         if (headerType == STORE_COUNTS) { // all counts of "characters"
             countHeader(out);
         } else if (headerType == STORE_TREE) {
@@ -238,34 +223,22 @@ public class SimpleHuffProcessor implements IHuffProcessor {
     // Writes out header for Standard Count Format
     private void countHeader(BitOutputStream out){
         for (int frequency: freq) {
-            sp.start();
             out.writeBits(BITS_PER_INT, frequency);
-            sp.stop();
-            timeForWrite+=sp.time();
         }
     }
 
     // Writes out header for Standard Tree Format
     private void treeHeader(BitOutputStream out) {
         // find the size of the tree header
-        sp.start();
         out.writeBits(BITS_PER_INT, tree.getNumInternalNodes() + tree.getNumLeafNodes() + tree.getNumLeafNodes() * (BITS_PER_WORD + 1));
-        sp.stop();
-        timeForWrite+=sp.time();
 
         // add the data for the tree
         for (TreeNode node : tree.getAllPreOrder()) {
             if (node.isLeaf()) {
-                sp.start();
                 out.writeBits(1, 1);
                 out.writeBits(BITS_PER_WORD + 1, node.getValue());
-                sp.stop();
-                timeForWrite+=sp.time();
             } else {
-                sp.start();
                 out.writeBits(1, 0);
-                sp.stop();
-                timeForWrite+=sp.time();
             }
         }
     }
@@ -320,9 +293,6 @@ public class SimpleHuffProcessor implements IHuffProcessor {
         }
         bout.close();
         bin.close();
-
-        bin.close();
-        bout.close();
         return decompressedSize;
     }
 
