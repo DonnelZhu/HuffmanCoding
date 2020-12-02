@@ -12,6 +12,7 @@ public class HuffmanTree {
     final private static String LEFT = "0";
     final private static int INTERNAL_NODE = -1;
 
+    // Constructor, creates empty HuffmanTree
     public HuffmanTree() {
         root = null;
         map = new HashMap<>();
@@ -19,7 +20,11 @@ public class HuffmanTree {
         numInternalNodes = 0;
     }
 
+    // Constructor, creates HuffmanTree from given PriorityQueue
     public HuffmanTree(PriorityQueue<TreeNode> q){
+        if (q == null){
+            throw new IllegalArgumentException("PriorityQueue<TreeNode> q cannot be null");
+        }
         // iterates through queue
         numLeafNodes = q.size();
         while(q.size() > 1) {
@@ -37,10 +42,8 @@ public class HuffmanTree {
 
     }
 
-    public HashMap<Integer, String> getMap(){
-        return map;
-    }
-
+    // given TreeNode root, fills instance variable map with paths to characters 
+    // in HuffmanTree
     private void fillMap(TreeNode curr, String currChunk){
         if (curr.isLeaf()){
             map.put(curr.getValue(), currChunk);
@@ -50,6 +53,12 @@ public class HuffmanTree {
         }
     }
 
+    // returns instance variable map, which contains paths to characters in HuffmanTree
+    public HashMap<Integer, String> getMap(){
+        return map;
+    }
+
+    // returns List of TreeNodes found in order in the HuffmanTree
     public List<TreeNode> getAllInOrder() {
         List<TreeNode> result = new ArrayList<>();
         getAllInOrderHelper(root, result);
@@ -57,7 +66,7 @@ public class HuffmanTree {
     }
 
     // helper method for getAll
-    // adds all values of Huffman Tree into result in ascending order
+    // adds all values of Huffman Tree into result in ascending order (in order)
     private void getAllInOrderHelper(TreeNode current, List<TreeNode> result) {
         if (current != null) {
             // adds left subtree
@@ -69,6 +78,8 @@ public class HuffmanTree {
         }
 
     }
+
+    // returns List of TreeNodes found pre order in the HuffmanTree
     public List<TreeNode> getAllPreOrder() {
         List<TreeNode> result = new ArrayList<>();
         getAllPreOrderHelper(root, result);
@@ -104,7 +115,9 @@ public class HuffmanTree {
         return root;
     }
 
-    // adds to 
+    // adds new TreeNode with value val to HuffmanTree, used when remaking tree with SCF
+    // pre: none
+    // post: none
     public void add(int val) {
         if (root == null) {
             root = new TreeNode(val, 0);
@@ -113,6 +126,7 @@ public class HuffmanTree {
         }
     }
 
+    // recursive helper method for add method, places new TreeNode at approriate place
     private boolean addHelper(TreeNode n, int val) {
         if (n.getValue() == INTERNAL_NODE) { // has not reached leaf node
             if (n.isLeaf()) { // internal node is leaf, add to left side
@@ -136,7 +150,13 @@ public class HuffmanTree {
         return false; // default base case: does not add if not internal node
     }
 
+    // helps SimpleHuggProcessor reach leaf node of character
+    // pre: n != null, bit == 0 || bit == 1
+    // post: returns TreeNode to the left, right of TreeNode n, or returns root
     public TreeNode getValue(TreeNode n, int bit) {
+        if (bit != 0 && bit != 1) {
+            throw new IllegalArgumentException("Int bit must be 0 or 1");
+        }
         if (n == null) {
             return root;
         } else {

@@ -55,7 +55,6 @@ public class TreeNode implements Comparable<TreeNode> {
      * @param leftSubtree is left subtree
      * @param rightSubtree is right subtree
      */
-
     public TreeNode(TreeNode leftSubtree, int value, TreeNode rightSubtree) {
         if(leftSubtree == null || rightSubtree == null)
             throw new IllegalArgumentException("child node references cannot be null");
@@ -69,7 +68,6 @@ public class TreeNode implements Comparable<TreeNode> {
      * Return value  based on comparing this TreeNode to another.
      * @return value < 0 if this < rhs, value > 0 if this > rhs, and 0 if this == rhs
      */
-
     public int compareTo(TreeNode rhs) {
 
         return frequency - rhs.frequency;
