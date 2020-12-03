@@ -1,7 +1,26 @@
+/*  Student information for assignment:
+ *
+ *  On <MY|OUR> honor, Donnel and Akif), this programming assignment is <MY|OUR> own work
+ *  and <I|WE> have not provided this code to any other student.
+ *
+ *  Number of slip days used:
+ *
+ *  Student 1 (Student whose turnin account is being used)
+ *  UTEID: dz5298
+ *  email address: dzhuhaocheng2013@gmail.com
+ *  Grader name: Noah Beal
+ *
+ *  Student 2
+ *  UTEID: asa3676
+ *  email address: akif.abidi@utexas.edu
+ *
+ */
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+// Stores TreeNodes in a binary tree for Huffman compression and decompression
 public class HuffmanTree {
     private TreeNode root;
     private HashMap<Integer, String> map;
@@ -150,7 +169,7 @@ public class HuffmanTree {
         return false; // default base case: does not add if not internal node
     }
 
-    // helps SimpleHuggProcessor reach leaf node of character
+    // helps SimpleHuffProcessor reach leaf node of character
     // pre: n != null, bit == 0 || bit == 1
     // post: returns TreeNode to the left, right of TreeNode n, or returns root
     public TreeNode getValue(TreeNode n, int bit) {
