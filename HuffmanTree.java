@@ -16,16 +16,18 @@
  *
  */
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 // Stores TreeNodes in a binary tree for Huffman compression and decompression
-public class HuffmanTree {
+public class HuffmanTree implements IHuffConstants{
     private TreeNode root;
     private HashMap<Integer, String> map;
     private int numInternalNodes;
     private int numLeafNodes;
+    private TreeNode traversalNode;
 
     final private static String RIGHT = "1";
     final private static String LEFT = "0";
@@ -39,11 +41,11 @@ public class HuffmanTree {
         numInternalNodes = 0;
     }
 
-    // Constructor, creates HuffmanTree from given PriorityQueue
-    public HuffmanTree(PriorityQueue<TreeNode> q){
-        if (q == null){
-            throw new IllegalArgumentException("PriorityQueue<TreeNode> q cannot be null");
-        }
+    // creates Huffman Tree from given array by using a Priority Queue
+    public HuffmanTree(int[] array){
+        PriorityQueue<TreeNode> q = new PriorityQueue<>();
+        // fills q with treeNodes made from freq
+        createQueue(array, q);
         // iterates through queue
         numLeafNodes = q.size();
         while(q.size() > 1) {
@@ -70,6 +72,23 @@ public class HuffmanTree {
             fillMap(curr.getLeft(), currChunk + LEFT);
             fillMap(curr.getRight(), currChunk + RIGHT);
         }
+    }
+
+    // fills up a PriorityQueue with TreeNodes made from uncompressed file
+    // pre: q != null
+    private void createQueue(int[] freq, PriorityQueue<TreeNode> q) {
+        if (q == null) {
+            throw new IllegalArgumentException("PriorityQueue q cannot be null");
+        }
+        for (int i = 0; i < freq.length; i++) {
+            // if the frequency of a character is > 0, it is added to q as a TreeNode
+            if (freq[i] != 0) {
+                TreeNode treeNode = new TreeNode(i, freq[i]);
+                q.enqueue(treeNode);
+            }
+        }
+        // enqeue TreeNode with PSEUDO_EOF value last
+        q.enqueue(new TreeNode(PSEUDO_EOF, 1));
     }
 
     // returns instance variable map, which contains paths to characters in HuffmanTree
@@ -185,6 +204,49 @@ public class HuffmanTree {
                 return n.getRight();
             }
         }
+    }
+
+    public void createTreeHeader(BitOutputStream out) {
+        // add the data for the tree
+        for (TreeNode node : getAllPreOrder()) {
+            if (node.isLeaf()) {
+                out.writeBits(1, 1);
+                out.writeBits(BITS_PER_WORD + 1, node.getValue());
+            } else {
+                out.writeBits(1, 0);
+            }
+        }
+    }
+
+    // place in tree class
+    // decompresses file using the uncompressingTree
+    // pre: none
+    // returns the updated decompressedSize
+    public int decompressMainBody(BitInputStream bin, BitOutputStream bout, int decompressedSize, HuffmanTree uncompressingTree) throws IOException {
+        int bit = bin.readBits(1);
+        TreeNode currentNode = uncompressingTree.getValue(null, bit);
+
+        while (currentNode != null) {
+            // reached leaf node with value
+            if (currentNode.isLeaf()) {
+                int val = currentNode.getValue();
+                // has not reached end of file, write out val and reset currentNode
+                // to root
+                if (val != PSEUDO_EOF) {
+                    bout.write(val);
+                    decompressedSize += BITS_PER_WORD;
+                    currentNode = uncompressingTree.getValue(null, bit);
+                } else {
+                    // currentNode set to null ends while loop
+                    currentNode = null;
+                }
+            } else {
+                // internal node, keep going down tree depending on bit
+                currentNode = uncompressingTree.getValue(currentNode, bit);
+                bit = bin.readBits(1);
+            }
+        }
+        return decompressedSize;
     }
 
 }

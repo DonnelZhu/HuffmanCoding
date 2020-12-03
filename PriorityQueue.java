@@ -52,7 +52,17 @@ public class PriorityQueue <E extends Comparable<? super E>>{
         return con.removeFirst();
     }
 
+    public boolean isEmpty() {
+        return con.isEmpty();
+    }
+
     public E peek(){
         return con.peek();
     }
+
+    public String toString() {
+        return con.toString();
+    }
+
 }
+
